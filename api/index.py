@@ -2,9 +2,11 @@ from flask import Flask, render_template, request, redirect
 import datetime
 import os
 
-app = Flask(__name__)
+# Explicitly set template folder path for Vercel compatibility
+template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'templates')
+app = Flask(__name__, template_folder=template_dir)
 
-# In-memory notes (will reset on cold start - normal for serverless)
+# In-memory notes (reset on cold starts - normal for Vercel)
 notes = []
 
 @app.route("/")
@@ -12,8 +14,12 @@ def home():
     try:
         return render_template("index.html", notes=notes)
     except Exception as e:
-        # This will help show the real error in Vercel logs
-        return f"Error rendering template: {str(e)}<br><br>Current path: {os.getcwd()}<br>Templates path: {app.template_folder}", 500
+        return f"""
+        <h2>Template Error</h2>
+        <p>{str(e)}</p>
+        <p>Current working dir: {os.getcwd()}</p>
+        <p>Template folder set to: {app.template_folder}</p>
+        """, 500
 
 @app.route("/add", methods=["POST"])
 def add_note():
