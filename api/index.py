@@ -1,16 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect
 import datetime
 import os
 
 app = Flask(__name__)
 
-# In-memory storage (note: lost when the serverless function sleeps)
-# For a real app, consider Vercel KV, Postgres, or SQLite with persistence later
+# In-memory notes (will reset on cold start - normal for serverless)
 notes = []
 
 @app.route("/")
 def home():
-    return render_template("index.html", notes=notes)
+    try:
+        return render_template("index.html", notes=notes)
+    except Exception as e:
+        # This will help show the real error in Vercel logs
+        return f"Error rendering template: {str(e)}<br><br>Current path: {os.getcwd()}<br>Templates path: {app.template_folder}", 500
 
 @app.route("/add", methods=["POST"])
 def add_note():
@@ -30,8 +33,8 @@ def add_note():
 @app.route("/delete/<int:note_id>")
 def delete_note(note_id):
     global notes
-    notes = [note for note in notes if note["id"] != note_id]
+    notes = [n for n in notes if n["id"] != note_id]
     return redirect("/")
 
-# This is required for Vercel to find the WSGI app
-app = app  # Vercel looks for a variable named 'app'
+# Required for Vercel
+app = app
