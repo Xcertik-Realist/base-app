@@ -1,6 +1,18 @@
 {
-  "rewrites": [
-    { "source": "/.well-known/farcaster.json", "destination": "/public/.well-known/farcaster.json" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "builds": [
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/.well-known/farcaster.json",
+      "dest": "/public/.well-known/farcaster.json"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }
