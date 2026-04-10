@@ -13,7 +13,7 @@
     "buttonTitle": "Deploy Contract on Base",
     "splashImageUrl": "https://base-app-virid.vercel.app/icon.png",
     "splashBackgroundColor": "#0052FF",
-    "subtitle": "Deploy SimpleStorage in one click",
-    "description": "Connect your wallet and deploy the SimpleStorage contract directly on Base Mainnet. You are the deployer."
+    "subtitle": "Deploy SimpleStorage on Base",
+    "description": "Connect your wallet and deploy the SimpleStorage contract on Base Mainnet."
   }
 }
