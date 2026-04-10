@@ -1,8 +1,8 @@
 {
   "accountAssociation": {
-    "header": "",
-    "payload": "",
-    "signature": ""
+    "header": "eyJmaWQiOjgwNzM3OCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDFCMjg4NmY5RENBNGIxN2YwYkZDMjllMUEzMWM5OTJiRjc0MjcyQmIifQ",
+    "payload": "eyJkb21haW4iOiJiYXNlLWFwcC12aXJpZC52ZXJjZWwuYXBwIn0",
+    "signature": "ngzR1Btq2nUR5cSYkGOQg5G7i3pt+1Rrji5bdabGt+wJV3vCuTvMYUYrdnqvzzZ0jgR/xBYcsQ19rNFDQYJ9Zxw="
   },
   "miniapp": {
     "version": "1",
@@ -14,12 +14,6 @@
     "splashImageUrl": "https://base-app-virid.vercel.app/icon.png",
     "splashBackgroundColor": "#0052FF",
     "subtitle": "Deploy SimpleStorage in one click",
-    "description": "Connect your wallet and deploy the SimpleStorage contract directly on Base Mainnet. You are the deployer.",
-    "primaryCategory": "developer-tools",
-    "tags": ["base", "deploy", "smart-contract", "solidity"],
-    "heroImageUrl": "https://base-app-virid.vercel.app/og-image.png",
-    "ogTitle": "Base Deploy Mini",
-    "ogDescription": "Deploy SimpleStorage contract on Base from your wallet in seconds",
-    "ogImageUrl": "https://base-app-virid.vercel.app/og-image.png"
+    "description": "Connect your wallet and deploy the SimpleStorage contract directly on Base Mainnet. You are the deployer."
   }
 }
