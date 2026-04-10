@@ -1,4 +1,3 @@
-
 {
   "accountAssociation": {
     "header": "",
@@ -11,8 +10,16 @@
     "iconUrl": "https://base-app-virid.vercel.app/icon.png",
     "homeUrl": "https://base-app-virid.vercel.app/",
     "imageUrl": "https://base-app-virid.vercel.app/og-image.png",
-    "buttonTitle": "Deploy on Base",
+    "buttonTitle": "Deploy Contract on Base",
     "splashImageUrl": "https://base-app-virid.vercel.app/icon.png",
-    "splashBackgroundColor": "#0052FF"
+    "splashBackgroundColor": "#0052FF",
+    "subtitle": "Deploy SimpleStorage in one click",
+    "description": "Connect your wallet and deploy the SimpleStorage contract directly on Base Mainnet. You are the deployer.",
+    "primaryCategory": "developer-tools",
+    "tags": ["base", "deploy", "smart-contract", "solidity"],
+    "heroImageUrl": "https://base-app-virid.vercel.app/og-image.png",
+    "ogTitle": "Base Deploy Mini",
+    "ogDescription": "Deploy SimpleStorage contract on Base from your wallet in seconds",
+    "ogImageUrl": "https://base-app-virid.vercel.app/og-image.png"
   }
 }
