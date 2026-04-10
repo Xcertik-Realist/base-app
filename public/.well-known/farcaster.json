@@ -1,1 +1,18 @@
 
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Base Deploy Mini",
+    "iconUrl": "https://base-app-virid.vercel.app/icon.png",
+    "homeUrl": "https://base-app-virid.vercel.app/",
+    "imageUrl": "https://base-app-virid.vercel.app/og-image.png",
+    "buttonTitle": "Deploy on Base",
+    "splashImageUrl": "https://base-app-virid.vercel.app/icon.png",
+    "splashBackgroundColor": "#0052FF"
+  }
+}
