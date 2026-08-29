@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Base Deploy Mini</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
+
+  <style>
+    body { font-family: system-ui, sans-serif; }
+    .mono { font-family: ui-monospace, monospace; }
+  </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+  <div class="max-w-2xl mx-auto p-8">
+    <div class="text-center mb-10">
+      <h1 class="text-5xl font-bold mb-3">Base Deploy Mini</h1>
+      <p class="text-emerald-400">I am the developer • Deploying from my wallet</p>
+    </div>
+
+    <div class="bg-gray-900 rounded-3xl p-8">
+      <div class="flex justify-between items-center mb-8 p-5 bg-gray-800 rounded-2xl">
+        <div id="status" class="text-gray-400">Not connected</div>
+        <button onclick="connectWallet()" id="connectBtn" 
+                class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-2xl font-semibold transition">
+          Connect My Wallet
+        </button>
+      </div>
+
+      <div id="deploySection" class="hidden space-y-6">
+        <div class="bg-gray-800 p-5 rounded-2xl">
+          <p class="text-sm text-gray-400 mb-1">Contract</p>
+          <p class="font-medium">SimpleStorage v1</p>
+          <p class="text-xs text-gray-500 mono">Stores a number on-chain</p>
+        </div>
+
+        <button onclick="deployContract()" id="deployBtn"
+                class="w-full bg-emerald-600 hover:bg-emerald-700 py-4 rounded-2xl font-bold text-lg transition disabled:opacity-50">
+          Deploy from MY Wallet to Base
+        </button>
+
+        <div id="result" class="mt-4 text-sm"></div>
+      </div>
+    </div>
+
+    <div class="text-center text-xs text-gray-500 mt-10">
+      You will be the deployer • Gas paid from your wallet • Base Mainnet
+    </div>
+  </div>
+
+  <script>
+    let web3, userAddress = null;
+
+    async function initFarcaster() {
+      try {
+        await new Promise(r => setTimeout(r, 100));
+        await window.miniapp.sdk.actions.ready();
+      } catch (e) {}
+    }
+
+    async function connectWallet() {
+      if (!window.ethereum) return alert("Please install a wallet like MetaMask");
+      try {
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        userAddress = accounts[0];
+        web3 = new Web3(window.ethereum);
+        document.getElementById("status").innerHTML = `✅ Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+        document.getElementById("connectBtn").classList.add("hidden");
+        document.getElementById("deploySection").classList.remove("hidden");
+        await switchToBase();
+      } catch (err) { alert("Connection failed"); }
+    }
+
+    async function switchToBase() {
+      try {
+        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
+      } catch (e) {
+        if (e.code === 4902) alert("Please add Base Mainnet manually in your wallet.");
+      }
+    }
+
+    async function deployContract() {
+      // Your existing deployContract code (keep it as-is from before)
+      // ... paste your full deployContract function here ...
+    }
+
+    window.addEventListener("load", async () => {
+      await initFarcaster();
+      // auto connect logic if you want
+    });
+  </script>
+</body>
+</html>
