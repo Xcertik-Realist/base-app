@@ -7,78 +7,174 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: { DEFAULT: "#0052FF", soft: "#1a6aff", dim: "#0036b3" },
+            ink: { 950: "#07090f", 900: "#0c101a", 800: "#141b2a", 700: "#1c2538" }
+          },
+          boxShadow: {
+            glow: "0 0 40px rgba(0, 82, 255, 0.25)",
+            card: "0 8px 32px rgba(0,0,0,0.35)"
+          }
+        }
+      }
+    };
+  </script>
   <style>
-    body { font-family: system-ui, sans-serif; }
-    .mono { font-family: ui-monospace, monospace; word-break: break-all; }
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: #07090f;
+      min-height: 100vh;
+    }
+    .bg-mesh {
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(0, 82, 255, 0.28), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(16, 185, 129, 0.12), transparent 50%),
+        radial-gradient(700px 400px at 50% 120%, rgba(99, 102, 241, 0.12), transparent 55%),
+        #07090f;
+    }
+    .glass {
+      background: rgba(12, 16, 26, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(16px);
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+    .btn {
+      transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
   </style>
 </head>
-<body class="bg-gray-950 text-white min-h-screen">
-  <div class="max-w-2xl mx-auto p-6">
-    <div class="text-center mb-8">
-      <h1 class="text-4xl font-bold mb-2">Base Deploy Mini</h1>
-      <p class="text-emerald-400 text-sm">Deploy • Set • Get on Base</p>
-    </div>
-
-    <div class="bg-gray-900 rounded-3xl p-6 space-y-6">
-      <!-- Wallet -->
-      <div class="flex justify-between items-center p-4 bg-gray-800 rounded-2xl gap-3">
-        <div id="status" class="text-gray-400 text-sm">Not connected</div>
-        <button onclick="connectWallet()" id="connectBtn"
-                class="bg-purple-600 hover:bg-purple-700 px-5 py-2.5 rounded-xl font-semibold text-sm shrink-0">
-          Connect
-        </button>
+<body class="bg-mesh text-white antialiased">
+  <div class="min-h-screen flex flex-col">
+    <!-- Top bar -->
+    <header class="sticky top-0 z-20 border-b border-white/5 bg-ink-950/70 backdrop-blur-xl">
+      <div class="max-w-lg mx-auto px-5 h-14 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-base shadow-glow flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6" fill="white"/>
+            </svg>
+          </div>
+          <span class="font-semibold tracking-tight">Base Deploy Mini</span>
+        </div>
+        <div id="status" class="text-xs text-white/45 font-medium">Not connected</div>
       </div>
+    </header>
 
-      <div id="appSection" class="hidden space-y-6">
-        <!-- Contract address -->
-        <div class="bg-gray-800 p-4 rounded-2xl space-y-2">
-          <p class="text-sm text-gray-400">Contract address</p>
-          <input id="contractAddress" type="text"
-                 class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-sm mono"
-                 value="0x001A9C831A3bd14838A4b55Ca385bEcD8Fec096f" />
-          <a id="basescanLink" class="text-blue-400 text-xs underline"
-             href="https://basescan.org/address/0x001A9C831A3bd14838A4b55Ca385bEcD8Fec096f"
-             target="_blank" rel="noopener">View on Basescan</a>
+    <main class="flex-1 max-w-lg mx-auto w-full px-5 py-8 space-y-5">
+      <!-- Hero -->
+      <section class="text-center pt-2 pb-1">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-base/15 border border-base/25 text-base text-xs font-medium mb-4">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          Base Mainnet
         </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+          Deploy & control<br>
+          <span class="bg-gradient-to-r from-base to-emerald-400 bg-clip-text text-transparent">onchain storage</span>
+        </h1>
+        <p class="text-white/45 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
+          Connect your wallet, deploy SimpleStorage, then read and write values on Base.
+        </p>
+      </section>
 
-        <!-- Get -->
-        <div class="bg-gray-800 p-4 rounded-2xl space-y-3">
-          <p class="font-medium">Read value</p>
-          <button onclick="getValue()" id="getBtn"
-                  class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold disabled:opacity-50">
-            Get value
+      <!-- Connect card -->
+      <section class="glass rounded-3xl p-5 shadow-card">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-sm font-medium">Wallet</p>
+            <p class="text-xs text-white/40 mt-0.5">Required for set & deploy</p>
+          </div>
+          <button onclick="connectWallet()" id="connectBtn"
+                  class="btn bg-base hover:bg-base-soft text-white px-5 py-2.5 rounded-2xl text-sm font-semibold shadow-glow">
+            Connect wallet
           </button>
-          <p id="storedValue" class="text-2xl font-bold text-emerald-400">—</p>
         </div>
+      </section>
+
+      <!-- App (shown after connect) -->
+      <div id="appSection" class="hidden space-y-4">
+        <!-- Contract -->
+        <section class="glass rounded-3xl p-5 shadow-card space-y-3">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-medium">Contract</p>
+            <span class="text-[10px] uppercase tracking-wider text-white/30 font-semibold">SimpleStorage</span>
+          </div>
+          <input id="contractAddress" type="text"
+                 class="w-full bg-ink-950/80 border border-white/8 focus:border-base/50 focus:ring-2 focus:ring-base/20 outline-none rounded-2xl px-4 py-3 text-xs mono text-white/90 transition"
+                 value="0x001A9C831A3bd14838A4b55Ca385bEcD8Fec096f" />
+          <a id="basescanLink"
+             class="inline-flex items-center gap-1.5 text-xs text-base hover:text-base-soft transition"
+             href="https://basescan.org/address/0x001A9C831A3bd14838A4b55Ca385bEcD8Fec096f"
+             target="_blank" rel="noopener">
+            View on Basescan
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </a>
+        </section>
+
+        <!-- Value display + get -->
+        <section class="glass rounded-3xl p-5 shadow-card">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs text-white/40 font-medium uppercase tracking-wider">Stored value</p>
+              <p id="storedValue" class="text-4xl font-extrabold tracking-tight mt-2 text-white">—</p>
+            </div>
+            <button onclick="getValue()" id="getBtn"
+                    class="btn bg-ink-700 hover:bg-ink-800 border border-white/8 px-4 py-2.5 rounded-2xl text-sm font-semibold">
+              Refresh
+            </button>
+          </div>
+        </section>
 
         <!-- Set -->
-        <div class="bg-gray-800 p-4 rounded-2xl space-y-3">
-          <p class="font-medium">Write value</p>
-          <input id="newValue" type="number" min="0" step="1" placeholder="Enter a number"
-                 class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2" />
-          <button onclick="setValue()" id="setBtn"
-                  class="w-full bg-amber-600 hover:bg-amber-700 py-3 rounded-xl font-semibold disabled:opacity-50">
-            Set value
-          </button>
-        </div>
+        <section class="glass rounded-3xl p-5 shadow-card space-y-3">
+          <p class="text-sm font-medium">Update value</p>
+          <div class="flex gap-2">
+            <input id="newValue" type="number" min="0" step="1" placeholder="Enter number"
+                   class="flex-1 bg-ink-950/80 border border-white/8 focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15 outline-none rounded-2xl px-4 py-3 text-sm transition" />
+            <button onclick="setValue()" id="setBtn"
+                    class="btn bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-95 px-5 py-3 rounded-2xl text-sm font-semibold shadow-lg shadow-amber-500/20 whitespace-nowrap">
+              Set
+            </button>
+          </div>
+        </section>
 
-        <!-- Deploy new -->
-        <div class="bg-gray-800 p-4 rounded-2xl space-y-3">
-          <p class="font-medium">Deploy a new SimpleStorage</p>
-          <p class="text-xs text-gray-500">Creates a new contract from your wallet (uses Base ETH for gas).</p>
+        <!-- Deploy -->
+        <section class="glass rounded-3xl p-5 shadow-card space-y-3">
+          <div>
+            <p class="text-sm font-medium">Deploy new contract</p>
+            <p class="text-xs text-white/40 mt-1 leading-relaxed">
+              Deploys a fresh SimpleStorage from your wallet. Gas paid in ETH on Base.
+            </p>
+          </div>
           <button onclick="deployContract()" id="deployBtn"
-                  class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-semibold disabled:opacity-50">
-            Deploy new contract
+                  class="btn w-full bg-gradient-to-r from-base to-indigo-500 hover:opacity-95 py-3.5 rounded-2xl text-sm font-semibold shadow-glow">
+            Deploy to Base
           </button>
-        </div>
+        </section>
 
-        <div id="result" class="text-sm"></div>
+        <!-- Status -->
+        <div id="result" class="text-sm min-h-[1.25rem]"></div>
       </div>
-    </div>
+    </main>
 
-    <p class="text-center text-xs text-gray-500 mt-8">
-      Base Mainnet • Gas paid from your wallet
-    </p>
+    <footer class="py-6 text-center text-[11px] text-white/25">
+      You are the deployer · Base Mainnet
+    </footer>
   </div>
 
   <script>
@@ -125,14 +221,12 @@
       const link = document.getElementById("basescanLink");
       if (addr && /^0x[a-fA-F0-9]{40}$/.test(addr)) {
         link.href = "https://basescan.org/address/" + addr;
-        link.classList.remove("hidden");
       }
     }
 
     async function initMiniApp() {
       try {
         await new Promise((r) => setTimeout(r, 50));
-        // Farcaster / Base mini app SDK
         if (window.miniapp?.sdk?.actions?.ready) {
           await window.miniapp.sdk.actions.ready();
         } else if (window.sdk?.actions?.ready) {
@@ -177,7 +271,7 @@
         web3 = new Web3(window.ethereum);
 
         document.getElementById("status").innerHTML =
-          `✅ ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+          `<span class="text-emerald-400">●</span> <span class="text-white/70">${userAddress.slice(0, 6)}…${userAddress.slice(-4)}</span>`;
         document.getElementById("connectBtn").classList.add("hidden");
         document.getElementById("appSection").classList.remove("hidden");
 
@@ -201,15 +295,15 @@
       const btn = document.getElementById("getBtn");
       try {
         btn.disabled = true;
-        setResult(`<p class="text-yellow-400">Reading...</p>`);
+        setResult(`<p class="text-white/40">Reading onchain…</p>`);
         await switchToBase();
         const contract = getContract();
         const value = await contract.methods.get().call();
         document.getElementById("storedValue").textContent = String(value);
-        setResult(`<p class="text-emerald-400">Read OK</p>`);
+        setResult(`<p class="text-emerald-400/90">Synced with chain</p>`);
       } catch (err) {
         console.error(err);
-        setResult(`<p class="text-red-400">❌ Get failed: ${err.message || err}</p>`);
+        setResult(`<p class="text-red-400">Get failed: ${err.message || err}</p>`);
       } finally {
         btn.disabled = false;
       }
@@ -226,25 +320,23 @@
 
       try {
         btn.disabled = true;
-        setResult(`<p class="text-yellow-400">Confirm set in your wallet...</p>`);
+        setResult(`<p class="text-amber-300/90">Confirm in wallet…</p>`);
         await switchToBase();
         const contract = getContract();
-
         const gas = await contract.methods.set(n.toString()).estimateGas({ from: userAddress });
         const receipt = await contract.methods.set(n.toString()).send({
           from: userAddress,
           gas: Math.floor(Number(gas) * 1.2)
         });
-
         setResult(`
-          <p class="text-emerald-400">✅ Value set</p>
-          <a class="text-blue-400 underline text-xs" target="_blank" rel="noopener"
-             href="https://basescan.org/tx/${receipt.transactionHash}">View tx</a>
+          <p class="text-emerald-400">Value updated</p>
+          <a class="text-base text-xs underline" target="_blank" rel="noopener"
+             href="https://basescan.org/tx/${receipt.transactionHash}">View transaction</a>
         `);
         await getValue();
       } catch (err) {
         console.error(err);
-        setResult(`<p class="text-red-400">❌ Set failed: ${err.message || err}</p>`);
+        setResult(`<p class="text-red-400">Set failed: ${err.message || err}</p>`);
       } finally {
         btn.disabled = false;
       }
@@ -258,7 +350,7 @@
       }
       try {
         btn.disabled = true;
-        setResult(`<p class="text-yellow-400">Confirm deploy in your wallet...</p>`);
+        setResult(`<p class="text-base/90">Confirm deploy in wallet…</p>`);
         await switchToBase();
 
         const contract = new web3.eth.Contract(CONTRACT_ABI);
@@ -275,14 +367,14 @@
         document.getElementById("storedValue").textContent = "0";
 
         setResult(`
-          <p class="text-emerald-400 font-semibold">✅ New contract deployed</p>
-          <p class="mono text-xs mt-1">${address}</p>
-          <a class="text-blue-400 underline text-xs" target="_blank" rel="noopener"
-             href="https://basescan.org/address/${address}">Basescan</a>
+          <p class="text-emerald-400 font-medium">Contract deployed</p>
+          <p class="mono text-[11px] text-white/50 mt-1">${address}</p>
+          <a class="text-base text-xs underline" target="_blank" rel="noopener"
+             href="https://basescan.org/address/${address}">Open on Basescan</a>
         `);
       } catch (err) {
         console.error(err);
-        setResult(`<p class="text-red-400">❌ Deploy failed: ${err.message || err}</p>`);
+        setResult(`<p class="text-red-400">Deploy failed: ${err.message || err}</p>`);
       } finally {
         btn.disabled = false;
       }
