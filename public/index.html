@@ -9,98 +9,136 @@
   <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
   <style>
     body { font-family: system-ui, sans-serif; }
-    .mono { font-family: ui-monospace, monospace; }
+    .mono { font-family: ui-monospace, monospace; word-break: break-all; }
   </style>
 </head>
 <body class="bg-gray-950 text-white min-h-screen">
-  <div class="max-w-2xl mx-auto p-8">
-    <div class="text-center mb-10">
-      <h1 class="text-5xl font-bold mb-3">Base Deploy Mini</h1>
-      <p class="text-emerald-400">I am the developer • Deploying from my wallet</p>
+  <div class="max-w-2xl mx-auto p-6">
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold mb-2">Base Deploy Mini</h1>
+      <p class="text-emerald-400 text-sm">Deploy • Set • Get on Base</p>
     </div>
 
-    <div class="bg-gray-900 rounded-3xl p-8">
-      <div class="flex justify-between items-center mb-8 p-5 bg-gray-800 rounded-2xl">
-        <div id="status" class="text-gray-400">Not connected</div>
+    <div class="bg-gray-900 rounded-3xl p-6 space-y-6">
+      <!-- Wallet -->
+      <div class="flex justify-between items-center p-4 bg-gray-800 rounded-2xl gap-3">
+        <div id="status" class="text-gray-400 text-sm">Not connected</div>
         <button onclick="connectWallet()" id="connectBtn"
-                class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-2xl font-semibold transition">
-          Connect My Wallet
+                class="bg-purple-600 hover:bg-purple-700 px-5 py-2.5 rounded-xl font-semibold text-sm shrink-0">
+          Connect
         </button>
       </div>
 
-      <div id="deploySection" class="hidden space-y-6">
-        <div class="bg-gray-800 p-5 rounded-2xl">
-          <p class="text-sm text-gray-400 mb-1">Contract</p>
-          <p class="font-medium">SimpleStorage v1</p>
-          <p class="text-xs text-gray-500 mono">Stores a number on-chain</p>
+      <div id="appSection" class="hidden space-y-6">
+        <!-- Contract address -->
+        <div class="bg-gray-800 p-4 rounded-2xl space-y-2">
+          <p class="text-sm text-gray-400">Contract address</p>
+          <input id="contractAddress" type="text"
+                 class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-sm mono"
+                 value="0x001A9C831A3bd14838A4b55Ca385bEcD8Fec096f" />
+          <a id="basescanLink" class="text-blue-400 text-xs underline"
+             href="https://basescan.org/address/0x001A9C831A3bd14838A4b55Ca385bEcD8Fec096f"
+             target="_blank" rel="noopener">View on Basescan</a>
         </div>
 
-        <button onclick="deployContract()" id="deployBtn"
-                class="w-full bg-emerald-600 hover:bg-emerald-700 py-4 rounded-2xl font-bold text-lg transition disabled:opacity-50">
-          Deploy from MY Wallet to Base
-        </button>
+        <!-- Get -->
+        <div class="bg-gray-800 p-4 rounded-2xl space-y-3">
+          <p class="font-medium">Read value</p>
+          <button onclick="getValue()" id="getBtn"
+                  class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold disabled:opacity-50">
+            Get value
+          </button>
+          <p id="storedValue" class="text-2xl font-bold text-emerald-400">—</p>
+        </div>
 
-        <div id="result" class="mt-4 text-sm"></div>
+        <!-- Set -->
+        <div class="bg-gray-800 p-4 rounded-2xl space-y-3">
+          <p class="font-medium">Write value</p>
+          <input id="newValue" type="number" min="0" step="1" placeholder="Enter a number"
+                 class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2" />
+          <button onclick="setValue()" id="setBtn"
+                  class="w-full bg-amber-600 hover:bg-amber-700 py-3 rounded-xl font-semibold disabled:opacity-50">
+            Set value
+          </button>
+        </div>
+
+        <!-- Deploy new -->
+        <div class="bg-gray-800 p-4 rounded-2xl space-y-3">
+          <p class="font-medium">Deploy a new SimpleStorage</p>
+          <p class="text-xs text-gray-500">Creates a new contract from your wallet (uses Base ETH for gas).</p>
+          <button onclick="deployContract()" id="deployBtn"
+                  class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-semibold disabled:opacity-50">
+            Deploy new contract
+          </button>
+        </div>
+
+        <div id="result" class="text-sm"></div>
       </div>
     </div>
 
-    <div class="text-center text-xs text-gray-500 mt-10">
-      You will be the deployer • Gas paid from your wallet • Base Mainnet
-    </div>
+    <p class="text-center text-xs text-gray-500 mt-8">
+      Base Mainnet • Gas paid from your wallet
+    </p>
   </div>
 
   <script>
     let web3 = null;
     let userAddress = null;
 
-    // ABI for:
-    // contract SimpleStorage {
-    //   uint256 public value;
-    //   function set(uint256 _value) public { value = _value; }
-    //   function get() public view returns (uint256) { return value; }
-    // }
     const CONTRACT_ABI = [
       {
-        "inputs": [{ "internalType": "uint256", "name": "_value", "type": "uint256" }],
-        "name": "set",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
+        inputs: [{ internalType: "uint256", name: "_value", type: "uint256" }],
+        name: "set",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function"
       },
       {
-        "inputs": [],
-        "name": "get",
-        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-        "stateMutability": "view",
-        "type": "function"
+        inputs: [],
+        name: "get",
+        outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function"
       },
       {
-        "inputs": [],
-        "name": "value",
-        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-        "stateMutability": "view",
-        "type": "function"
+        inputs: [],
+        name: "value",
+        outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function"
       }
     ];
 
-    /**
-     * REQUIRED: paste your REAL creation bytecode from Remix.
-     * Remix → compile SimpleStorage → Compilation details → BYTECODE → "object"
-     * Put 0x in front if missing.
-     *
-     * Placeholder below will NOT deploy until you replace it.
-     */
-   const CONTRACT_BYTECODE = "0x6080604052348015600e575f5ffd5b506101718061001c5f395ff3fe608060405234801561000f575f5ffd5b506004361061003f575f3560e01c80633fa4f2451461004357806360fe47b1146100615780636d4ce63c1461007d575b5f5ffd5b61004b61009b565b60405161005891906100c9565b60405180910390f35b61007b60048036038101906100769190610110565b6100a0565b005b6100856100a9565b60405161009291906100c9565b60405180910390f35b5f5481565b805f8190555050565b5f5f54905090565b5f819050919050565b6100c3816100b1565b82525050565b5f6020820190506100dc5f8301846100ba565b92915050565b5f5ffd5b6100ef816100b1565b81146100f9575f5ffd5b50565b5f8135905061010a816100e6565b92915050565b5f60208284031215610125576101246100e2565b5b5f610132848285016100fc565b9150509291505056fea26469706673582212208c8215624b3d00ca4960cff18c30a7282ddc39aea67e9ff5e9e7008fe077edd064736f6c63430008220033";
+    const CONTRACT_BYTECODE =
+      "0x6080604052348015600e575f5ffd5b506101718061001c5f395ff3fe608060405234801561000f575f5ffd5b506004361061003f575f3560e01c80633fa4f2451461004357806360fe47b1146100615780636d4ce63c1461007d575b5f5ffd5b61004b61009b565b60405161005891906100c9565b60405180910390f35b61007b60048036038101906100769190610110565b6100a0565b005b6100856100a9565b60405161009291906100c9565b60405180910390f35b5f5481565b805f8190555050565b5f5f54905090565b5f819050919050565b6100c3816100b1565b82525050565b5f6020820190506100dc5f8301846100ba565b92915050565b5f5ffd5b6100ef816100b1565b81146100f9575f5ffd5b50565b5f8135905061010a816100e6565b92915050565b5f60208284031215610125576101246100e2565b5b5f610132848285016100fc565b9150509291505056fea26469706673582212208c8215624b3d00ca4960cff18c30a7282ddc39aea67e9ff5e9e7008fe077edd064736f6c63430008220033";
 
-    async function initFarcaster() {
+    function setResult(html) {
+      document.getElementById("result").innerHTML = html;
+    }
+
+    function getContractAddress() {
+      return (document.getElementById("contractAddress").value || "").trim();
+    }
+
+    function updateBasescanLink() {
+      const addr = getContractAddress();
+      const link = document.getElementById("basescanLink");
+      if (addr && /^0x[a-fA-F0-9]{40}$/.test(addr)) {
+        link.href = "https://basescan.org/address/" + addr;
+        link.classList.remove("hidden");
+      }
+    }
+
+    async function initMiniApp() {
       try {
-        await new Promise((r) => setTimeout(r, 100));
+        await new Promise((r) => setTimeout(r, 50));
+        // Farcaster / Base mini app SDK
         if (window.miniapp?.sdk?.actions?.ready) {
           await window.miniapp.sdk.actions.ready();
+        } else if (window.sdk?.actions?.ready) {
+          await window.sdk.actions.ready();
         }
-      } catch (e) {
-        // ignore outside Farcaster / Base mini app
-      }
+      } catch (_) {}
     }
 
     async function switchToBase() {
@@ -111,7 +149,6 @@
         rpcUrls: ["https://mainnet.base.org"],
         blockExplorerUrls: ["https://basescan.org"]
       };
-
       try {
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
@@ -131,82 +168,131 @@
 
     async function connectWallet() {
       if (!window.ethereum) {
-        alert("Please install a wallet like MetaMask");
+        alert("Install MetaMask or open this mini app inside Base / Farcaster.");
         return;
       }
-
       try {
         const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
         userAddress = accounts[0];
         web3 = new Web3(window.ethereum);
 
         document.getElementById("status").innerHTML =
-          `✅ Connected: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+          `✅ ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
         document.getElementById("connectBtn").classList.add("hidden");
-        document.getElementById("deploySection").classList.remove("hidden");
+        document.getElementById("appSection").classList.remove("hidden");
 
         await switchToBase();
+        updateBasescanLink();
+        await getValue();
       } catch (err) {
         console.error(err);
         alert("Connection failed: " + (err.message || err));
       }
     }
 
-    async function deployContract() {
-      const resultEl = document.getElementById("result");
-      const btn = document.getElementById("deployBtn");
+    function getContract() {
+      const address = getContractAddress();
+      if (!web3 || !userAddress) throw new Error("Connect wallet first");
+      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error("Invalid contract address");
+      return new web3.eth.Contract(CONTRACT_ABI, address);
+    }
 
-      if (!web3 || !userAddress) {
-        alert("Connect your wallet first");
-        return;
-      }
-
-      if (!CONTRACT_BYTECODE || CONTRACT_BYTECODE.includes("PASTE_YOUR_REMIX")) {
-        resultEl.innerHTML =
-          `<p class="text-red-400">❌ Set CONTRACT_BYTECODE in index.html (copy from Remix compile output).</p>`;
-        return;
-      }
-
+    async function getValue() {
+      const btn = document.getElementById("getBtn");
       try {
         btn.disabled = true;
-        resultEl.innerHTML = `<p class="text-yellow-400">Switching to Base & estimating gas...</p>`;
-
+        setResult(`<p class="text-yellow-400">Reading...</p>`);
         await switchToBase();
-
-        const contract = new web3.eth.Contract(CONTRACT_ABI);
-        const deployTx = contract.deploy({ data: CONTRACT_BYTECODE });
-
-        resultEl.innerHTML = `<p class="text-yellow-400">Confirm the deploy transaction in your wallet...</p>`;
-
-        const gas = await deployTx.estimateGas({ from: userAddress });
-        const gasLimit = Math.floor(Number(gas) * 1.2);
-
-        const deployed = await deployTx.send({
-          from: userAddress,
-          gas: gasLimit
-        });
-
-        const address = deployed.options.address;
-
-        resultEl.innerHTML = `
-          <p class="text-emerald-400 font-semibold">✅ Deployed successfully</p>
-          <p class="mono break-all mt-2">${address}</p>
-          <a class="text-blue-400 underline text-xs inline-block mt-2" target="_blank" rel="noopener"
-             href="https://basescan.org/address/${address}">
-            View on Basescan
-          </a>
-        `;
+        const contract = getContract();
+        const value = await contract.methods.get().call();
+        document.getElementById("storedValue").textContent = String(value);
+        setResult(`<p class="text-emerald-400">Read OK</p>`);
       } catch (err) {
         console.error(err);
-        const msg = err?.message || String(err);
-        resultEl.innerHTML = `<p class="text-red-400">❌ Deploy failed: ${msg}</p>`;
+        setResult(`<p class="text-red-400">❌ Get failed: ${err.message || err}</p>`);
       } finally {
         btn.disabled = false;
       }
     }
 
+    async function setValue() {
+      const btn = document.getElementById("setBtn");
+      const raw = document.getElementById("newValue").value;
+      if (raw === "" || Number.isNaN(Number(raw))) {
+        setResult(`<p class="text-red-400">Enter a valid number</p>`);
+        return;
+      }
+      const n = BigInt(raw);
+
+      try {
+        btn.disabled = true;
+        setResult(`<p class="text-yellow-400">Confirm set in your wallet...</p>`);
+        await switchToBase();
+        const contract = getContract();
+
+        const gas = await contract.methods.set(n.toString()).estimateGas({ from: userAddress });
+        const receipt = await contract.methods.set(n.toString()).send({
+          from: userAddress,
+          gas: Math.floor(Number(gas) * 1.2)
+        });
+
+        setResult(`
+          <p class="text-emerald-400">✅ Value set</p>
+          <a class="text-blue-400 underline text-xs" target="_blank" rel="noopener"
+             href="https://basescan.org/tx/${receipt.transactionHash}">View tx</a>
+        `);
+        await getValue();
+      } catch (err) {
+        console.error(err);
+        setResult(`<p class="text-red-400">❌ Set failed: ${err.message || err}</p>`);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deployContract() {
+      const btn = document.getElementById("deployBtn");
+      if (!web3 || !userAddress) {
+        alert("Connect wallet first");
+        return;
+      }
+      try {
+        btn.disabled = true;
+        setResult(`<p class="text-yellow-400">Confirm deploy in your wallet...</p>`);
+        await switchToBase();
+
+        const contract = new web3.eth.Contract(CONTRACT_ABI);
+        const deployTx = contract.deploy({ data: CONTRACT_BYTECODE });
+        const gas = await deployTx.estimateGas({ from: userAddress });
+        const deployed = await deployTx.send({
+          from: userAddress,
+          gas: Math.floor(Number(gas) * 1.2)
+        });
+
+        const address = deployed.options.address;
+        document.getElementById("contractAddress").value = address;
+        updateBasescanLink();
+        document.getElementById("storedValue").textContent = "0";
+
+        setResult(`
+          <p class="text-emerald-400 font-semibold">✅ New contract deployed</p>
+          <p class="mono text-xs mt-1">${address}</p>
+          <a class="text-blue-400 underline text-xs" target="_blank" rel="noopener"
+             href="https://basescan.org/address/${address}">Basescan</a>
+        `);
+      } catch (err) {
+        console.error(err);
+        setResult(`<p class="text-red-400">❌ Deploy failed: ${err.message || err}</p>`);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById("contractAddress").addEventListener("input", updateBasescanLink);
+
     window.addEventListener("load", async () => {
-      await initFarcaster();
+      await initMiniApp();
+      updateBasescanLink();
     });
   </script>
 </body>
