@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Base Deploy Mini</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
-
   <style>
     body { font-family: system-ui, sans-serif; }
     .mono { font-family: ui-monospace, monospace; }
@@ -23,7 +22,7 @@
     <div class="bg-gray-900 rounded-3xl p-8">
       <div class="flex justify-between items-center mb-8 p-5 bg-gray-800 rounded-2xl">
         <div id="status" class="text-gray-400">Not connected</div>
-        <button onclick="connectWallet()" id="connectBtn" 
+        <button onclick="connectWallet()" id="connectBtn"
                 class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-2xl font-semibold transition">
           Connect My Wallet
         </button>
@@ -51,44 +50,163 @@
   </div>
 
   <script>
-    let web3, userAddress = null;
+    let web3 = null;
+    let userAddress = null;
+
+    // ABI for:
+    // contract SimpleStorage {
+    //   uint256 public value;
+    //   function set(uint256 _value) public { value = _value; }
+    //   function get() public view returns (uint256) { return value; }
+    // }
+    const CONTRACT_ABI = [
+      {
+        "inputs": [{ "internalType": "uint256", "name": "_value", "type": "uint256" }],
+        "name": "set",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "get",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "value",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
+
+    /**
+     * REQUIRED: paste your REAL creation bytecode from Remix.
+     * Remix → compile SimpleStorage → Compilation details → BYTECODE → "object"
+     * Put 0x in front if missing.
+     *
+     * Placeholder below will NOT deploy until you replace it.
+     */
+    const CONTRACT_BYTECODE = "0xPASTE_YOUR_REMIX_BYTECODE_HERE";
 
     async function initFarcaster() {
       try {
-        await new Promise(r => setTimeout(r, 100));
-        await window.miniapp.sdk.actions.ready();
-      } catch (e) {}
+        await new Promise((r) => setTimeout(r, 100));
+        if (window.miniapp?.sdk?.actions?.ready) {
+          await window.miniapp.sdk.actions.ready();
+        }
+      } catch (e) {
+        // ignore outside Farcaster / Base mini app
+      }
+    }
+
+    async function switchToBase() {
+      const base = {
+        chainId: "0x2105",
+        chainName: "Base",
+        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+        rpcUrls: ["https://mainnet.base.org"],
+        blockExplorerUrls: ["https://basescan.org"]
+      };
+
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: base.chainId }]
+        });
+      } catch (e) {
+        if (e.code === 4902) {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [base]
+          });
+        } else {
+          throw e;
+        }
+      }
     }
 
     async function connectWallet() {
-      if (!window.ethereum) return alert("Please install a wallet like MetaMask");
+      if (!window.ethereum) {
+        alert("Please install a wallet like MetaMask");
+        return;
+      }
+
       try {
         const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
         userAddress = accounts[0];
         web3 = new Web3(window.ethereum);
-        document.getElementById("status").innerHTML = `✅ Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+
+        document.getElementById("status").innerHTML =
+          `✅ Connected: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
         document.getElementById("connectBtn").classList.add("hidden");
         document.getElementById("deploySection").classList.remove("hidden");
-        await switchToBase();
-      } catch (err) { alert("Connection failed"); }
-    }
 
-    async function switchToBase() {
-      try {
-        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
-      } catch (e) {
-        if (e.code === 4902) alert("Please add Base Mainnet manually in your wallet.");
+        await switchToBase();
+      } catch (err) {
+        console.error(err);
+        alert("Connection failed: " + (err.message || err));
       }
     }
 
     async function deployContract() {
-      // Your existing deployContract code (keep it as-is from before)
-      // ... paste your full deployContract function here ...
+      const resultEl = document.getElementById("result");
+      const btn = document.getElementById("deployBtn");
+
+      if (!web3 || !userAddress) {
+        alert("Connect your wallet first");
+        return;
+      }
+
+      if (!CONTRACT_BYTECODE || CONTRACT_BYTECODE.includes("PASTE_YOUR_REMIX")) {
+        resultEl.innerHTML =
+          `<p class="text-red-400">❌ Set CONTRACT_BYTECODE in index.html (copy from Remix compile output).</p>`;
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        resultEl.innerHTML = `<p class="text-yellow-400">Switching to Base & estimating gas...</p>`;
+
+        await switchToBase();
+
+        const contract = new web3.eth.Contract(CONTRACT_ABI);
+        const deployTx = contract.deploy({ data: CONTRACT_BYTECODE });
+
+        resultEl.innerHTML = `<p class="text-yellow-400">Confirm the deploy transaction in your wallet...</p>`;
+
+        const gas = await deployTx.estimateGas({ from: userAddress });
+        const gasLimit = Math.floor(Number(gas) * 1.2);
+
+        const deployed = await deployTx.send({
+          from: userAddress,
+          gas: gasLimit
+        });
+
+        const address = deployed.options.address;
+
+        resultEl.innerHTML = `
+          <p class="text-emerald-400 font-semibold">✅ Deployed successfully</p>
+          <p class="mono break-all mt-2">${address}</p>
+          <a class="text-blue-400 underline text-xs inline-block mt-2" target="_blank" rel="noopener"
+             href="https://basescan.org/address/${address}">
+            View on Basescan
+          </a>
+        `;
+      } catch (err) {
+        console.error(err);
+        const msg = err?.message || String(err);
+        resultEl.innerHTML = `<p class="text-red-400">❌ Deploy failed: ${msg}</p>`;
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     window.addEventListener("load", async () => {
       await initFarcaster();
-      // auto connect logic if you want
     });
   </script>
 </body>
